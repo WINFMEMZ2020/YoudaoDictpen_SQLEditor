@@ -1,0 +1,2 @@
+# YoudaoDictpen_SQLEditor
+适用于有道词典笔3代的SQL编辑脚本，用于播放视频
