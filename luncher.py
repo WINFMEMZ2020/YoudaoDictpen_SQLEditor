@@ -100,6 +100,13 @@ def save_config():
     print("配置文件成功修改，请等待脚本加载")
     os.system('start cmd /c "py main.py"')
 
+def help_choose_path():
+    new_window = tk.Toplevel(root)
+    # 设置窗口的标题和大小
+    new_window.title("帮助")
+    new_window.geometry("200x100")
+
+
 root = tk.Tk()
 root.title("JSON Config Editor")
 
@@ -121,13 +128,14 @@ for i, (key, val) in enumerate(data.items()):
     
     if i == 0:
         browse_button = tk.Button(root, text="填充", command=custom_action)
-
+    elif i == 3:
+         browse_button = tk.Button(root, text="帮助", command=help_choose_path)
     else:
         browse_button = tk.Button(root, text="浏览", command=lambda entry=values[i]: browse_folder(entry))
 
     browse_button.grid(row=i+1, column=2)
 
-browse_button.grid_remove()
+# browse_button.grid_remove()
 
 tk.Button(root, text="确定", command=save_config).grid(row=len(data)+1, column=0, columnspan=3)
 

@@ -5,6 +5,7 @@ import shutil
 import time
 import json
 import subprocess
+import colorama
 
 #这是用以获取所有后缀是.mp4的文件的函数
 def get_mp4_files(directory):
@@ -70,13 +71,23 @@ json_file_path = 'config.json'
 with open(json_file_path, 'r') as json_file:
     loaded_dict = json.load(json_file)
 
+def check_and_correct_path(input_path):
+    # 检查路径是否合法
+    if input_path.endswith("//"):
+        return input_path
+    else:
+        # 处理路径
+        corrected_path = input_path.replace("/", "//")
+        corrected_path = os.path.normpath(corrected_path)
+        return corrected_path
+    
 table_name = loaded_dict['table_name']
-directory_path = loaded_dict['video_input_path']
-video_output_path = loaded_dict['video_output_path']
+directory_path = check_and_correct_path(loaded_dict['video_input_path'])
+video_output_path = check_and_correct_path(loaded_dict['video_output_path'])
 dictpen_video_path = loaded_dict['dictpen_video_path']
 
 #用户确认开始操作
-print("请确认您的参数正确无误。如果发现错误，请退出本程序并修改。\n如果没有错误，按下Enter开始执行脚本\n\ntable_name【表table_mathexercise的完整名称】：",table_name,"\nvideo_input_path【输入视频的文件夹】：",directory_path,"\nvideo_output_path【输出处理完的视频的文件夹】：",video_output_path,"\ndictpen_video_path【词典笔存放视频的文件夹】：",dictpen_video_path)
+print("请确认您的参数正确无误。如果发现错误，请退出本程序并修改。\n如果没有错误，按下Enter开始执行脚本\n\ntable_name【表table_mathexercise的完整名称】：",table_name,"\nvideo_input_path【输入视频的文件夹路径】：",directory_path,"\nvideo_output_path【输出处理完的视频的文件夹路径】：",video_output_path,"\ndictpen_video_path【词典笔存放视频的文件夹路径】：",dictpen_video_path)
 os.system("pause")
 #检查设备是否处于OK状态
 check_devices_okay()
@@ -106,8 +117,11 @@ table_math_all_knowledgeId = [row[0] for row in results]
 table_math_all_knowledgeId = list(filter(None, table_math_all_knowledgeId))
 
 #准备knowledgeId，方法为获取最大的knowledgeId，并每个新项目在此基础上+1
-max_knowledgeId = max(table_math_all_knowledgeId)
-temp_knowledgeId = max_knowledgeId
+int_table_math_all_knowledgeId = []
+for tmp in table_math_all_knowledgeId:
+    int_table_math_all_knowledgeId.append(int(tmp))
+max_knowledgeId = max(int_table_math_all_knowledgeId)
+temp_knowledgeId = str(max_knowledgeId)
 
 #记录运行时的时间戳
 now_timestamp = int(time.time() * 1000)
@@ -123,7 +137,7 @@ for file_dict in files_list:
         md5 = hashlib.md5(f.read()).hexdigest()
 
     try:
-        shutil.copyfile(file_dict["path"], video_output_path + md5 + ".mp4") #以文件MD5命名文件
+        shutil.copyfile(file_dict["path"], video_output_path + "\\" +md5 + ".mp4") #以文件MD5命名文件
     except shutil.SameFileError:
         print("发生错误：" + file_dict["path"] + "  已存在同名文件")
 
@@ -140,8 +154,10 @@ for file_dict in files_list:
                 None,None,final_knowledgeID,None,
                 "[]","dictpen","0","1","1",str(now_timestamp)
                 )
-    cursor.execute("INSERT INTO " + table_name + " (code, type, text, ques_body_type, ques_body_content, pattern_type, pattern_content, answer_type, answer_content, analysis_type, analysis_content, scan_image_url, scan_image_local, knowledge, explain_video, point_video, knowledgeId, simQuesList, label, source, newContent, item_state, sync_state, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", new_data)
-
+    try:
+        cursor.execute("INSERT INTO " + table_name + " (code, type, text, ques_body_type, ques_body_content, pattern_type, pattern_content, answer_type, answer_content, analysis_type, analysis_content, scan_image_url, scan_image_local, knowledge, explain_video, point_video, knowledgeId, simQuesList, label, source, newContent, item_state, sync_state, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", new_data)
+    except sqlite3.IntegrityError:
+        continue 
     #现在table_math的处理完了，接下来去处理table_knowledge
     (final_name_show,extension) = os.path.splitext(os.path.basename(file_dict["path"])) #不考虑运行效率的情况，去掉后缀获取文件名
 
