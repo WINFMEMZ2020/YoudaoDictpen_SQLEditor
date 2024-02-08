@@ -68,11 +68,12 @@ def initialize():
         [sg.Text("table_name【表table_mathexercise的完整名称】："),sg.In(key='table_name_input', default_text=table_name), sg.Button("自动填充")],
         [sg.Text("video_input_path【输入视频的文件夹路径】："),sg.In(key='video_input_path_input', default_text=video_input_path), sg.FolderBrowse(button_text="选择文件夹", target='video_input_path_input')],
         [sg.Text("video_output_path【输出处理完的视频的文件夹路径】："),sg.In(key='video_output_path_input', default_text=video_output_path), sg.FolderBrowse(button_text="选择文件夹", target='video_output_path_input')],
-        [sg.Text("dictpen_video_path【词典笔存放视频的文件夹路径】："),sg.In(key='dictpen_video_path_input', default_text=dictpen_video_path)],
+        [sg.Text("dictpen_video_path【词典笔存放视频的文件夹路径】："),sg.In(key='dictpen_video_path_input', default_text=dictpen_video_path),sg.Button("帮助")],
         [sg.Button("保存并启动删除脚本"), sg.Button("保存并启动添加脚本")]
     ]
 
-    
+
+
 
     window = sg.Window('脚本启动器 ver1.0', layout, size=(800, 400))
     return window, config
@@ -144,6 +145,32 @@ def main():
             with open("config.json", "w", encoding="UTF-8") as file_object:
                 json.dump(data, file_object)
             os.system('start item_remove.exe')
+        elif event == "帮助":
+            # 定义弹出窗口的布局
+            popout_layout = [
+                [sg.Text("请选择符合您的条件的选项:\n")],
+                [sg.Text("我希望将文件直接存放到词典笔的Music目录下"), sg.Button(" 我符合此条件", key='condition1')],
+                [sg.Text("我希望将文件存储到词典笔的Music文件夹下的某个目录中,路径为: /userdisk/Music/"),sg.In(key="path_under_music_input"),sg.Text("/") , sg.Button(" 我符合此条件", key='condition2')],
+                [sg.Text('\n\n如果您希望将视频文件直接拷贝到词典笔的MTP磁盘下的Music目录中,请选择第一项"我希望将文件直接存放到词典笔的Music目录下"\n\n如果您希望将视频文件拷贝到词典笔的MTP磁盘下的Music文件夹下的某个目录中,请选择第二项""我希望将文件存储到词典笔的Music文件夹下的\n某个目录中",并在输入框中填入Music文件夹下的拷入视频的文件夹的名称.\n\n\n一般情况下,建议直接选择第一项,并直接将视频文件拷贝到Music目录下即可.\n如果您要选择第二项,那么输入框只能填写Music文件夹下的自己的文件夹的名称,后面不要带"/"或"//"等\n字符.或者可以填写嵌套文件夹的目录,如"Video/2024/files",文件夹之间使用"/"隔开而不是"//"\n')]
+            ]
+
+            # 创建弹出窗口
+            popout_window = sg.Window("帮助", layout=popout_layout)
+
+            while True:
+                popout_event, popout_values = popout_window.read()
+
+                if popout_event == sg.WINDOW_CLOSED:
+                    break
+                if popout_event == 'condition1':
+                    window["dictpen_video_path_input"].update("file:///userdisk/Music/")
+                    break
+                elif popout_event == 'condition2':
+                    path_under_music = popout_values["path_under_music_input"]
+                    window["dictpen_video_path_input"].update(f"file:///userdisk/Music/{path_under_music}/")
+                    break
+            popout_window.close()
+
     window.close()
 
 if __name__ == "__main__":
