@@ -134,6 +134,10 @@ while True:
             window['-LIST-'].update(names)
         except IndexError:
             pass
+    elif event == "保存":
+        check_devices_okay()
+        os.system("adb push " + exerciseFavorite_name +" /userdisk/math/exerciseFav/exerciseFavorite.db ")
+        print("保存成功")
 
     # elif event == '撤销':
     #     if removed_names:
