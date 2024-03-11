@@ -6,6 +6,8 @@ import time
 import json
 import subprocess
 import colorama
+import keyboard
+#使用keyboard库以方便在Linux下实现按任意键继续
 
 #这是用以获取所有后缀是.mp4的文件的函数
 def get_mp4_files(directory):
@@ -48,21 +50,21 @@ def check_devices_okay():
         check_devices_okay()
     elif adb_login_state == 1:
         print("您有超过一台设备连接到了电脑上，请断开除词典笔外其它设备，然后按下Enter。")
-        os.system("pause")
+        keyboard.wait()
         check_devices_okay()
     elif adb_login_state == 2:
         print("您没有已连接的设备，请检查词典笔是否连接到电脑，词典笔是否启用adb，然后按下Enter。")
-        os.system("pause")
+        keyboard.wait()
         check_devices_okay()
     elif adb_login_state == 3:
         print("adb的密码不正确。您的词典笔可能不适合本脚本，请尝试使用另一版本的脚本。按下Enter退出此脚本。")
-        os.system("pause")
+        keyboard.wait()
     elif adb_login_state == 4:
         print("\n已成功连接到词典笔。请在脚本执行完成前不要连接其它设备，包括物理设备（手机、平板等）与虚拟设备（WSA或其它安卓虚拟机等），否则可能导致操作失败。")
         return True
     elif adb_login_state == 5:
         print("无法执行连接命令。您连接设备的可能不是词典笔。请检查您连接的设备，然后按下Enter。")
-        os.system("pause")
+        keyboard.wait()
         check_devices_okay()
 
 
@@ -88,7 +90,7 @@ dictpen_video_path = loaded_dict['dictpen_video_path']
 
 #用户确认开始操作
 print("请确认您的参数正确无误。如果发现错误，请退出本程序并修改。\n如果没有错误，按下Enter开始执行脚本\n\ntable_name【表table_mathexercise的完整名称】：",table_name,"\nvideo_input_path【输入视频的文件夹路径】：",directory_path,"\nvideo_output_path【输出处理完的视频的文件夹路径】：",video_output_path,"\ndictpen_video_path【词典笔存放视频的文件夹路径】：",dictpen_video_path)
-os.system("pause")
+keyboard.wait()
 #检查设备是否处于OK状态
 check_devices_okay()
 current_time = time.localtime()
@@ -120,7 +122,10 @@ table_math_all_knowledgeId = list(filter(None, table_math_all_knowledgeId))
 int_table_math_all_knowledgeId = []
 for tmp in table_math_all_knowledgeId:
     int_table_math_all_knowledgeId.append(int(tmp))
-max_knowledgeId = max(int_table_math_all_knowledgeId)
+try:
+    max_knowledgeId = max(int_table_math_all_knowledgeId)
+except ValueError:
+    max_knowledgeId = 0
 temp_knowledgeId = str(max_knowledgeId)
 
 #记录运行时的时间戳
@@ -170,9 +175,9 @@ conn.commit()
 conn.close()
 
 print("已完成对数据库的添加。\n请将" + video_output_path + "内的视频文件传至词典笔的" + dictpen_video_path + "目录下，\n完成后，按下Enter来将数据库传回词典笔内。\n")
-os.system("pause")
+keyboard.wait()
 #确保adb连接可用
 check_devices_okay()
 os.system("adb push " + exerciseFavorite_name +" /userdisk/math/exerciseFav/exerciseFavorite.db ")
 print("处理完成!")
-os.system("pause")
+keyboard.wait()
