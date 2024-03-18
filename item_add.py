@@ -14,8 +14,8 @@ def get_mp4_files(directory):
         for file in files:
             if file.endswith(".mp4"):
                 file_path = os.path.join(root, file)  # 视频文件的绝对路径
-                mp4_files.append({"path": file_path})
-
+                file_name = os.path.basename(file_path)
+                mp4_files.append({"path": file_path, "name": file_name})
     return mp4_files
 
 #用于登录adb的函数
@@ -135,11 +135,8 @@ for file_dict in files_list:
     #意义不明的计算MD5，作为文件名与code的值
     with open(file_dict["path"], 'rb') as f:
         md5 = hashlib.md5(f.read()).hexdigest()
+        name = (file_dict["name"])
 
-    try:
-        shutil.copyfile(file_dict["path"], video_output_path + "\\" +md5 + ".mp4") #以文件MD5命名文件
-    except shutil.SameFileError:
-        print("发生错误：" + file_dict["path"] + "  已存在同名文件")
 
     #生成knowledgeId
     temp_knowledgeId = str(int(temp_knowledgeId) + 1)
@@ -148,9 +145,9 @@ for file_dict in files_list:
     #由于实时获取timestamp会导致timestamp重复，反正不重要，就让其+1000ms就好了
     now_timestamp = now_timestamp + 1000
 
-    new_data = (md5,"2","file_md5=" + md5,2,
-                md5,None,None,"1","Video:" + os.path.basename(file_dict["path"]),
-                "1",None,None,None,'{"knowId":1164,"knowName":"求比值的方法","knowVideo":"https://ydhardwarebusiness.nosdn.127.net/b70c028ded3d78c0435a31460247e73d.mp4"}',
+    new_data = (md5,"2",name,2,
+                md5,None,None,"1","Video:" + name,
+                "1",None,None,None,'{"knowId":1164,"knowName":"求比值的方法","knowVideo":"'+ dictpen_video_path + name + '"}',
                 None,None,final_knowledgeID,None,
                 "[]","dictpen","0","1","1",str(now_timestamp)
                 )
@@ -161,15 +158,15 @@ for file_dict in files_list:
     #现在table_math的处理完了，接下来去处理table_knowledge
     (final_name_show,extension) = os.path.splitext(os.path.basename(file_dict["path"])) #不考虑运行效率的情况，去掉后缀获取文件名
 
-    knowledge_parents = '[{"knowId": 1164,"knowName": "求比值的方法","knowVideo": "' + dictpen_video_path +  md5 + ".mp4" + '"}]'
-    new_knowledge_data = (final_knowledgeID,final_name_show,dictpen_video_path +  md5 + ".mp4",knowledge_parents,"[]","[]","1",now_timestamp)
+    knowledge_parents = '[{"knowId": 1164,"knowName": "求比值的方法","knowVideo":  "' + dictpen_video_path + name + '"}]'
+    new_knowledge_data = (final_knowledgeID,final_name_show,dictpen_video_path + name,knowledge_parents,"[]","[]","1",now_timestamp)
     cursor.execute("INSERT INTO table_knowledge (code, text, video, parents, children, simQuesList, sync_state, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", new_knowledge_data)
 
 #提交并关闭数据库
 conn.commit()
 conn.close()
 
-print("已完成对数据库的添加。\n请将" + video_output_path + "内的视频文件传至词典笔的" + dictpen_video_path + "目录下，\n完成后，按下Enter来将数据库传回词典笔内。\n")
+print("已完成对数据库的添加。\n请将" + directory_path + "内的视频文件传至词典笔的" + dictpen_video_path + "目录下，\n完成后，按下Enter来将数据库传回词典笔内。\n")
 os.system("pause")
 #确保adb连接可用
 check_devices_okay()
