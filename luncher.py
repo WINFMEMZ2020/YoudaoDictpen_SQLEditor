@@ -64,7 +64,6 @@ def initialize():
 
     table_name = config.get("table_name","")
     video_input_path = config.get('video_input_path', '')
-    video_output_path = config.get("video_output_path","")
     dictpen_video_path = config.get("dictpen_video_path","")
 
     layout = [
@@ -118,13 +117,12 @@ def main():
         elif event == "保存并启动添加脚本":
             table_name_to_save = values["table_name_input"]
             video_input_path_to_save = values["video_input_path_input"]
-            video_output_path_to_save = values["video_output_path_input"]
+
             vdictpen_video_path_to_save = values["dictpen_video_path_input"]
 
             data = {
                 "table_name": table_name_to_save,
                 "video_input_path": video_input_path_to_save,
-                "video_output_path": video_output_path_to_save,
                 "dictpen_video_path": vdictpen_video_path_to_save
             }
 
@@ -135,13 +133,11 @@ def main():
         elif event == "保存并启动删除脚本":
             table_name_to_save = values["table_name_input"]
             video_input_path_to_save = values["video_input_path_input"]
-            video_output_path_to_save = values["video_output_path_input"]
             vdictpen_video_path_to_save = values["dictpen_video_path_input"]
 
             data = {
                 "table_name": table_name_to_save,
                 "video_input_path": video_input_path_to_save,
-                "video_output_path": video_output_path_to_save,
                 "dictpen_video_path": vdictpen_video_path_to_save
             }
 

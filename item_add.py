@@ -83,11 +83,10 @@ def check_and_correct_path(input_path):
     
 table_name = loaded_dict['table_name']
 directory_path = check_and_correct_path(loaded_dict['video_input_path'])
-video_output_path = check_and_correct_path(loaded_dict['video_output_path'])
 dictpen_video_path = loaded_dict['dictpen_video_path']
 
 #用户确认开始操作
-print("请确认您的参数正确无误。如果发现错误，请退出本程序并修改。\n如果没有错误，按下Enter开始执行脚本\n\ntable_name【表table_mathexercise的完整名称】：",table_name,"\nvideo_input_path【输入视频的文件夹路径】：",directory_path,"\nvideo_output_path【输出处理完的视频的文件夹路径】：",video_output_path,"\ndictpen_video_path【词典笔存放视频的文件夹路径】：",dictpen_video_path)
+print("请确认您的参数正确无误。如果发现错误，请退出本程序并修改。\n如果没有错误，按下Enter开始执行脚本\n\ntable_name【表table_mathexercise的完整名称】：",table_name,"\nvideo_input_path【输入视频的文件夹路径】：",directory_path,"\ndictpen_video_path【词典笔存放视频的文件夹路径】：",dictpen_video_path)
 os.system("pause")
 #检查设备是否处于OK状态
 check_devices_okay()
