@@ -16,8 +16,12 @@ def adb_login():
         return 1
     elif 'adb.exe: no devices/emulators found' in str(command_output) or 'adb.exe: no devices/emulators found' in str(error):
         return 2
-    elif 'password incorrect!' in str(command_output) or 'password incorrect!' in str(error):
-        return 3
+    elif 'password incorrect!' in str(command_output) or 'password incorrect!' in str(error):        
+        command_output, error = proc.communicate(input=b"x3sbrY1d2@dictpen\n")
+        if 'password incorrect!' in str(command_output) or 'password incorrect!' in str(error):
+            return 5
+        else:
+            return 3
     elif 'success.' in str(command_output) or 'success.' in str(error):
         return 4
     else:
@@ -60,14 +64,12 @@ def initialize():
 
     table_name = config.get("table_name","")
     video_input_path = config.get('video_input_path', '')
-    video_output_path = config.get("video_output_path","")
     dictpen_video_path = config.get("dictpen_video_path","")
 
     layout = [
         [sg.Text("请修改您需要的参数，然后点击“确定并启动”按钮来启动脚本\n默认情况下，不建议随便更改陌生的数值。", font={'family': 'SimHei', 'size': 20, 'weight': 'bold'})],
         [sg.Text("table_name【表table_mathexercise的完整名称】："),sg.In(key='table_name_input', default_text=table_name), sg.Button("自动填充")],
         [sg.Text("video_input_path【输入视频的文件夹路径】："),sg.In(key='video_input_path_input', default_text=video_input_path), sg.FolderBrowse(button_text="选择文件夹", target='video_input_path_input')],
-        [sg.Text("video_output_path【输出处理完的视频的文件夹路径】："),sg.In(key='video_output_path_input', default_text=video_output_path), sg.FolderBrowse(button_text="选择文件夹", target='video_output_path_input')],
         [sg.Text("dictpen_video_path【词典笔存放视频的文件夹路径】："),sg.In(key='dictpen_video_path_input', default_text=dictpen_video_path),sg.Button("帮助")],
         [sg.Button("保存并启动删除脚本"), sg.Button("保存并启动添加脚本")]
     ]
@@ -104,7 +106,7 @@ def main():
 
             # 遍历所有表，找到以 'table_mathexercise_urs' 开头的表
             for table in tables:
-                if table[0].startswith('table_mathexercise_urs'):
+                if not table[0].startswith('table_mathexercise_anonymous') and not table[0].startswith('table_knowledge'):
                     table_name = table[0]
                     window['table_name_input'].update(table_name)
                     break
@@ -115,36 +117,33 @@ def main():
         elif event == "保存并启动添加脚本":
             table_name_to_save = values["table_name_input"]
             video_input_path_to_save = values["video_input_path_input"]
-            video_output_path_to_save = values["video_output_path_input"]
+
             vdictpen_video_path_to_save = values["dictpen_video_path_input"]
 
             data = {
                 "table_name": table_name_to_save,
                 "video_input_path": video_input_path_to_save,
-                "video_output_path": video_output_path_to_save,
                 "dictpen_video_path": vdictpen_video_path_to_save
             }
 
             with open("config.json", "w", encoding="UTF-8") as file_object:
                 json.dump(data, file_object)
 
-            os.system('start item_add.exe')
+            os.system('start item_add.py')
         elif event == "保存并启动删除脚本":
             table_name_to_save = values["table_name_input"]
             video_input_path_to_save = values["video_input_path_input"]
-            video_output_path_to_save = values["video_output_path_input"]
             vdictpen_video_path_to_save = values["dictpen_video_path_input"]
 
             data = {
                 "table_name": table_name_to_save,
                 "video_input_path": video_input_path_to_save,
-                "video_output_path": video_output_path_to_save,
                 "dictpen_video_path": vdictpen_video_path_to_save
             }
 
             with open("config.json", "w", encoding="UTF-8") as file_object:
                 json.dump(data, file_object)
-            os.system('start item_remove.exe')
+            os.system('start item_remove.py')
         elif event == "帮助":
             # 定义弹出窗口的布局
             popout_layout = [
