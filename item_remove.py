@@ -17,8 +17,14 @@ def adb_login():
         return 1
     elif 'adb.exe: no devices/emulators found' in str(command_output) or 'adb.exe: no devices/emulators found' in str(error):
         return 2
-    elif 'password incorrect!' in str(command_output) or 'password incorrect!' in str(error):
-        return 3
+    elif 'password incorrect!' in str(command_output) or 'password incorrect!' in str(error):        
+        command_output, error = proc.communicate(input=b"x3sbrY1d2@dictpen\n")
+        if 'password incorrect!' in str(command_output) or 'password incorrect!' in str(error):
+            return 3
+        elif 'success.' in str(command_output) or 'success.' in str(error):
+            return 4
+        else:
+            return 6
     elif 'success.' in str(command_output) or 'success.' in str(error):
         return 4
     else:
@@ -52,6 +58,10 @@ def check_devices_okay():
         print("无法执行连接命令。您连接设备的可能不是词典笔。请检查您连接的设备，然后按下Enter。")
         os.system("pause")
         check_devices_okay()
+    elif adb_login_state == 6:
+        print("发生错误，按下Enter以退出。")
+        os.system("pause")
+        check_devices_okay()  
 
 def extract_data_from_database(db_file):
     conn = sqlite3.connect(db_file)
