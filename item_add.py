@@ -18,32 +18,74 @@ def get_mp4_files(directory):
                 mp4_files.append({"path": file_path, "name": file_name})
     return mp4_files
 
-#用于登录adb的函数
-def adb_login():
-    proc = subprocess.Popen("adb shell auth", shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    command_output, error = proc.communicate(input=b"CherryYoudao\n")
-    print("command=",command_output,",error=",error)
-    if 'login with "adb shell auth" to continue.' in str(command_output) or 'login with "adb shell auth" to continue.' in str(error):
-        return 0
-    elif 'adb.exe: more than one device/emulator' in str(command_output) or 'adb.exe: more than one device/emulator' in str(error):
-        return 1
-    elif 'adb.exe: no devices/emulators found' in str(command_output) or 'adb.exe: no devices/emulators found' in str(error):
-        return 2
-    elif 'password incorrect!' in str(command_output) or 'password incorrect!' in str(error):
-        return 3
-    elif 'success.' in str(command_output) or 'success.' in str(error):
-        return 4
-    else:
-        return 5
-    
+class ADB:
+    def __init__(self) -> None:
+        pass
+
+    def bypassVerification(self):
+        adb_command = self.getCommand()
+        output,error = self._execute(f'{adb_command} shell cat /Version')
+        if output is None:
+            print("Error: ADB command execution timed out.")
+            return 5
+
+        if output.find('login with "adb shell auth" to continue') != -1 or error.find('login with "adb shell auth" to continue') != -1:
+            # 尝试第一个密码
+            print("Attempting login...")
+            auth_command = f'echo CherryYoudao | {adb_command} shell auth'
+            auth_result = self._execute_with_timeout(auth_command)
+            if auth_result and auth_result.find('success') != -1:
+                print('DictPen is unlocked.')
+                return 4
+            else:
+                print('Failed to unlock with default password.')
+                print('Attempting new password...')
+                new_auth_command = f'echo x3sbrY1d2@dictpen | {adb_command} shell auth'
+                #尝试第二个密码
+                new_auth_result = self._execute_with_timeout(new_auth_command)
+                if new_auth_result and new_auth_result.find('success') != -1:
+                    print('DictPen is unlocked with new password.')
+                else:
+                    print('Failed to unlock with new password.')
+                    return 0
+        elif output.find('no devices/emulators found') !=-1  or error.find('no devices/emulators found') !=-1:
+            return 2
+        elif output.find('more than one device/emulator') !=-1 or error.find('more than one device/emulator') !=-1:
+            return 1
+        elif output.find('DictPen') !=-1 or error.find('DictPen') !=-1:
+            return 4
+        else:
+            return 5
+    def getCommand(self) -> str:
+        adb = 'adb'  # Assuming adb is in the PATH
+        return adb if os.path.exists(adb) else 'adb'
+
+    def _execute(self, cmd):
+        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = process.communicate()
+        return stdout.decode().strip(),stderr.decode().strip()
+
+    def _execute_with_timeout(self, cmd, timeout=3):
+        #设置超时防卡死
+        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        try:
+            stdout, stderr = process.communicate(timeout=timeout)
+            return stdout.decode().strip()
+        except subprocess.TimeoutExpired:
+            process.kill()
+            print("Error: ADB command execution timed out.")
+            return None
+
+# 初始化adb类
+adb = ADB()
 #用来确保adb连接OK的函数
 def check_devices_okay():
     print("\n以下是已连接的设备:")
     os.system("adb devices")
-    adb_login_state = adb_login()
+    adb_login_state = adb.bypassVerification()
     
     if adb_login_state == 0:
-        print("您没有登录您的词典笔，请先登录。")
+        print("密码尝试失败，请手动输入密码或尝试使用另一版本的脚本。按下Enter输入密码。")
         os.system("adb shell auth")
         check_devices_okay()
     elif adb_login_state == 1:
@@ -54,9 +96,6 @@ def check_devices_okay():
         print("您没有已连接的设备，请检查词典笔是否连接到电脑，词典笔是否启用adb，然后按下Enter。")
         os.system("pause")
         check_devices_okay()
-    elif adb_login_state == 3:
-        print("adb的密码不正确。您的词典笔可能不适合本脚本，请尝试使用另一版本的脚本。按下Enter退出此脚本。")
-        os.system("pause")
     elif adb_login_state == 4:
         print("\n已成功连接到词典笔。请在脚本执行完成前不要连接其它设备，包括物理设备（手机、平板等）与虚拟设备（WSA或其它安卓虚拟机等），否则可能导致操作失败。")
         return True
@@ -64,7 +103,6 @@ def check_devices_okay():
         print("无法执行连接命令。您连接设备的可能不是词典笔。请检查您连接的设备，然后按下Enter。")
         os.system("pause")
         check_devices_okay()
-
 
 #加载各种路径等
 json_file_path = 'config.json'
