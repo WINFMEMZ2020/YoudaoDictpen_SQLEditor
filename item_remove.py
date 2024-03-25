@@ -4,6 +4,157 @@ import os
 import subprocess
 import sqlite3
 import time
+import paramiko
+
+class SFTP:
+    def __init__(self):
+        self.ssh_client = paramiko.SSHClient()
+        self.ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        self.connection_start_time = None
+
+    def connect(self, ip, username, password):
+        self.connection_start_time = time.time()
+        try:
+            self.ssh_client.connect(ip, username=username, password=password, timeout=10)
+        except paramiko.AuthenticationException:
+            print("Authentication failed. Please check your credentials.")
+        except paramiko.SSHException as e:
+            end_time = time.time()
+            wait_time = int(end_time - self.connection_start_time)
+            print(f"Connection failed after {wait_time} seconds: {e}")
+        except Exception as e:
+            end_time = time.time()
+            wait_time = int(end_time - self.connection_start_time)
+            print(f"Error: {e}")
+
+    def bytes_to_mib(self, bytes_value):
+        mib_value = bytes_value / (1024 * 1024)
+        return mib_value
+
+    def _execute_sftp(self, local_files, remote_path):
+        # 连接SSH服务器
+        if not self.ssh_client.get_transport() or not self.ssh_client.get_transport().is_active():
+            print("SSH connection is not active.")
+            print("连接失败，请检查连接，按enter退出")
+            os.system("pause")
+            os._exit(1)
+
+        # 创建 SFTP 客户端
+        sftp_client = self.ssh_client.open_sftp()
+
+        # 上传文件到远程服务器
+        for file_info in local_files:
+            local_file_path = file_info["path"]
+            remote_file_path = os.path.join(remote_path, file_info["name"])
+            total_bytes = os.path.getsize(local_file_path)
+
+            # 检查远程文件是否存在，并获取已传输的大小
+            try:
+                remote_file_size = sftp_client.stat(remote_file_path).st_size
+            except FileNotFoundError:
+                remote_file_size = 0
+
+            # 定义进度回调函数
+            def progress_callback(bytes_transferred, file_size):
+                bytes_transferred_mib = self.bytes_to_mib(bytes_transferred)
+                file_size_mib = self.bytes_to_mib(file_size)
+                progress = int(bytes_transferred_mib / file_size_mib * 100)
+                print(f"\rProgress: {progress}% ({bytes_transferred_mib:.2f} MiB / {file_size_mib:.2f} MiB) - Uploading: {file_info['name']} - Elapsed Time: {self.get_elapsed_time()}", end='', flush=True)
+
+                # 判断是否上传完成
+                if bytes_transferred == file_size:
+                    print(f"\nUpload complete: {file_info['name']}")
+
+            # 上传文件
+            retries = 3  # 设置重试次数
+            for attempt in range(retries):
+                try:
+                    with open(local_file_path, 'rb') as local_file:
+                        # 移动文件指针至已传输的位置
+                        local_file.seek(remote_file_size)
+                        # 从已传输位置开始上传文件，并传入进度回调函数
+                        sftp_client.putfo(local_file, remote_file_path, callback=lambda x, y: progress_callback(x + remote_file_size, total_bytes), file_size=total_bytes)
+                    break  # 上传成功，跳出重试循环
+                except paramiko.SSHException as e:
+                    print(f"SSHException occurred during upload: {e}")
+                    if attempt < retries - 1:
+                        print("Retrying upload...")
+                        time.sleep(5)  # 等待一段时间后重试
+                    else:
+                        print("Upload failed after retries.")
+                        raise  # 上传失败，抛出异常
+
+        # 关闭连接
+        sftp_client.close()
+
+        print("\nAll files uploaded.")
+
+        # 返回上传完成信息
+        return "All files uploaded."
+
+    def remove_file(self, remote_path):
+        if not self.ssh_client.get_transport() or not self.ssh_client.get_transport().is_active():
+            print("SSH connection is not active.")
+            print("连接失败，请检查连接，按enter退出")
+            os.system("pause") 
+            os._exit(1)
+        # 创建 SFTP 客户端
+        sftp_client = self.ssh_client.open_sftp()
+
+        # 删除文件
+        try:
+            sftp_client.remove(remote_path)
+            print(f"File removed successfully: {remote_path}")
+        except Exception as e:
+            print(f"Error removing file: {e}")
+
+        # 关闭连接
+        sftp_client.close()
+
+    def execute_sftp(self, local_files, remote_path):
+        if not self.ssh_client.get_transport() or not self.ssh_client.get_transport().is_active():
+            print("SSH connection is not active.")
+            print("连接失败，请检查连接，按enter退出")
+            os.system("pause")
+            os._exit(1)
+        sftp_client = self.ssh_client.open_sftp()
+        local_file_path = local_files
+        remote_file_path = remote_path
+        total_bytes = os.path.getsize(local_file_path)
+        with open(local_file_path, 'rb') as local_file:
+            sftp_client.putfo(local_file, remote_file_path)
+        sftp_client.close()
+        print("\nAll files uploaded.")
+        return "All files uploaded."
+
+
+    def get_elapsed_time(self):
+        if self.connection_start_time is not None:
+            elapsed_time = int(time.time() - self.connection_start_time)
+            return f"{elapsed_time} seconds"
+        else:
+            return "N/A"
+
+    def pull_file(self, remote_path, local_path):
+        if not self.ssh_client.get_transport() or not self.ssh_client.get_transport().is_active():
+            print("SSH connection is not active.")
+            print("连接失败，请检查连接，按enter退出")
+            os.system("pause") 
+            os._exit(1)
+        # 创建 SFTP 客户端
+        sftp_client = self.ssh_client.open_sftp()
+
+        # 下载文件
+        try:
+            sftp_client.get(remote_path, local_path)
+            print(f"File downloaded successfully to {local_path}")
+        except Exception as e:
+            print(f"Error downloading file: {e}")
+
+        # 关闭连接
+        sftp_client.close()
+
+sftp = SFTP()
 
 ####
 # 读取config.json文件
@@ -12,6 +163,9 @@ with open('config.json', 'r') as f:
 
 dictpen_password = config.get("dictpen_password","")
 delete_video_from_dictpen_state = config.get("delete_video_from_dictpen","")
+ip_address = config.get("ip_address","")
+remote_copy_status = config.get("remote_copy_video_to_dictpen","")
+dictpen_root = config.get("dictpen_root","")
 #####
 
 #用于登录adb的函数
@@ -83,13 +237,19 @@ def extract_data_from_database(db_file):
     #ChatGPT帮大忙了
 
 #2024.03.24 移动代码
-check_devices_okay()
 current_time = time.localtime()
-#生成exerciseFavorite.db的文件名称，方便出现问题及时回溯
 exerciseFavorite_name = "exerciseFavorite_" + "{:02d}{:02d}{:02d}{:02d}{:02d}{:02d}".format(current_time.tm_year, current_time.tm_mon, current_time.tm_mday, current_time.tm_hour, current_time.tm_min, current_time.tm_sec) + ".db"
-#生成并执行pull命令
-exerciseFavorite_pull_command = "adb pull /userdisk/math/exerciseFav/exerciseFavorite.db " + exerciseFavorite_name
-os.system(exerciseFavorite_pull_command) 
+if remote_copy_status == 1:
+    sftp.connect(ip_address, "root", dictpen_root)
+    local_file_path = './' + exerciseFavorite_name  # 当前目录
+    sftp.pull_file("/userdisk/math/exerciseFav/exerciseFavorite.db", local_file_path) 
+#检查设备是否处于OK状态
+else:
+    check_devices_okay()
+    #生成exerciseFavorite.db的文件名称，方便出现问题及时回溯
+    #生成并执行pull命令
+    exerciseFavorite_pull_command = "adb pull /userdisk/math/exerciseFav/exerciseFavorite.db " + exerciseFavorite_name
+    os.system(exerciseFavorite_pull_command) 
 #数据库执行命令
 result = extract_data_from_database(exerciseFavorite_name)
 
@@ -199,9 +359,13 @@ while True:
                     if "/userdisk/Music/" in video_path_to_delete:
                         print("路径检查：路径合法，可以删除")
                         delete_text = "正在删除：\n" + video_path_to_delete
-                        os.system(delete_command)
-                        popout_window["delete_text"].update(delete_text)
-                        popout_window.refresh()
+                        if remote_copy_status == 1:
+                            sftp.connect(ip_address, "root", dictpen_root)
+                            sftp.remove_file(video_path_to_delete)
+                        else:
+                            os.system(delete_command)
+                            popout_window["delete_text"].update(delete_text)
+                            popout_window.refresh()
                     else:
                         print("路径不合法，无法删除此文件")
                 else:
