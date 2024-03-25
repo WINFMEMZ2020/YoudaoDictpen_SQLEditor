@@ -1,8 +1,11 @@
 {
     "table_name": "",
-    "video_input_path": "",
-    "dictpen_video_path": "file:///userdisk/Music/",
-    "dictpen_password": "",
-    "copy_video_to_dictpen": 0,
-    "delete_video_from_dictpen": 0
+    "video_input_path": "", 
+    "dictpen_video_path": "file:///userdisk/Music/", 
+    "dictpen_password": "", 
+    "copy_video_to_dictpen": 0, 
+    "delete_video_from_dictpen": 0, 
+    "remote_copy_video_to_dictpen": 0,
+    "dictpen_root": "",
+    "ip_address": ""
 }
