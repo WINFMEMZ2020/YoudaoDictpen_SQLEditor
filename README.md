@@ -4,10 +4,10 @@
 # 使用方法
 在下载本仓库或release后，打开launcher.py或launcher.exe，按照提示操作即可。<br>
 
-# v1.5更新内容
+# v1.6更新内容
 ## 新增内容
-1.删除脚本中现已支持按住Ctrl进行多选，按住Shift进行范围选择。<br>
-2.增加了adb登录失败次数过多的提示。<br>
+1.新增了表table_mathexercise_urs的判断，对于一些没有此表的型号将填入table_mathexercise_anonymous<br>
+2.修了点小bug<br>
 
 # Moreover
 感谢由evnrowa提交的三个pull request，这对于该脚本功能的完善，bug的修复，逻辑的优化有着不可或缺的作用。<br>
