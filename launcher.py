@@ -155,7 +155,7 @@ def initialize():
 
 
 
-    window = sg.Window('脚本启动器 ver1.4', layout, size=(800, 400))
+    window = sg.Window('脚本启动器 ver1.6', layout, size=(800, 400))
     return window, config
 
 def main():
@@ -166,6 +166,7 @@ def main():
         if event == sg.WIN_CLOSED:
             break
         elif event == "自动填充":
+            
             global retry_times
             #print("retey_times=",str(retry_times))
             #先保存adb密码
@@ -225,6 +226,7 @@ def main():
             os.system(exerciseFavorite_pull_command) 
 
             conn = sqlite3.connect(exerciseFavorite_name)
+            #conn = sqlite3.connect("exerciseFavorite_20240829100911.db")
             cursor = conn.cursor()
 
             # 获取数据库中所有表的名称
@@ -232,15 +234,24 @@ def main():
             tables = cursor.fetchall()
 
             # 遍历所有表，找到以 'table_mathexercise_urs' 开头的表
+            found = False
             for table in tables:
                 if not table[0].startswith('table_mathexercise_anonymous') and not table[0].startswith('table_knowledge'):
                     table_name = table[0]
                     window['table_name_input'].update(table_name)
+                    found = True
+                    print("\n\n请注意--找到以table_mathexercise_urs开头的表.该表的完整名称为" + table_name + "\n该表只有词典笔登录账号后才能访问,若需要未登录也可访问,请手动将填入开头为table_mathexercise_urs的字符串完整替换成如下:\ntable_mathexercise_anonymous")
                     break
+
+            if not found:
+                # 处理没有找到表的情况
+                window['table_name_input'].update('table_mathexercise_anonymous')
+                print("\n\n请注意--没有找到以table_mathexercise_urs开头的表.将会填入table_mathexercise_anonymous")
 
             # 关闭连接
             cursor.close()
             conn.close()
+            
         elif event == "保存并启动添加脚本":
 
             table_name_to_save = values["table_name_input"]
